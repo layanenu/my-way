@@ -1,7 +1,7 @@
-import { Location } from "../screens/NewLocation";
+import { Location } from "../screens/NewLocationScreen";
 
 export type RootStackParamList = {
-  Home: undefined;
-  NewLocation?: { location?: Location };
-  LocationList: undefined;
+  HomeScreen: undefined;
+  LocationListScreen: undefined;
+  NewLocationScreen?: { location?: Location };
 };

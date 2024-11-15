@@ -5,9 +5,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
-import { Location } from "./NewLocation";
+import { Location } from "./NewLocationScreen";
 
-export const LocationList = () => {
+export const LocationListScreen = () => {
   const [locations, setLocations] = useState<Location[]>([]);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -30,7 +30,7 @@ export const LocationList = () => {
   );
 
   const handleLocationPress = (location: Location) => {
-    navigation.navigate("NewLocation", { location });
+    navigation.navigate("NewLocationScreen", { location });
   };
 
   return (
