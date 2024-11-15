@@ -9,10 +9,13 @@ import { RouteProp } from "@react-navigation/native";
 
 type NewLocationScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "NewLocation"
+  "NewLocationScreen"
 >;
 
-type NewLocationScreenRouteProp = RouteProp<RootStackParamList, "NewLocation">;
+type NewLocationScreenRouteProp = RouteProp<
+  RootStackParamList,
+  "NewLocationScreen"
+>;
 
 type Props = {
   navigation: NewLocationScreenNavigationProp;
@@ -27,7 +30,7 @@ export interface Location {
   markerColor: string;
 }
 
-export const NewLocation = ({ navigation, route }: Props) => {
+export const NewLocationScreen = ({ navigation, route }: Props) => {
   const [locationName, setLocationName] = useState("");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
@@ -91,7 +94,7 @@ export const NewLocation = ({ navigation, route }: Props) => {
       setLongitude("");
       setMarkerColor("");
 
-      navigation.navigate("LocationList");
+      navigation.navigate("LocationListScreen");
     } catch (error) {
       Alert.alert("Erro", "Falha ao salvar a localização. Tente novamente.");
       console.error("Erro ao salvar a localização:", error);
@@ -112,7 +115,7 @@ export const NewLocation = ({ navigation, route }: Props) => {
       await AsyncStorage.setItem("locations", JSON.stringify(updatedLocations));
       Alert.alert("Sucesso", "Localização removida!");
 
-      navigation.navigate("LocationList");
+      navigation.navigate("LocationListScreen");
     } catch (error) {
       Alert.alert("Erro", "Falha ao remover a localização. Tente novamente.");
       console.error("Erro ao remover a localização:", error);

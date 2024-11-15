@@ -15,7 +15,7 @@ import {
 import MapView, { LatLng, Marker } from "react-native-maps";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const Home = () => {
+export const HomeScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [location, setLocation] = useState<LocationObject | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -26,13 +26,13 @@ export const Home = () => {
   const mapRef = useRef<MapView>(null);
 
   const handleFabPress = () => {
-    navigation.navigate("NewLocation");
+    navigation.navigate("NewLocationScreen");
   };
 
   const handleMarkerPress = (markerId: string) => {
     const markerToEdit = markers.find((marker) => marker.id === markerId);
     if (markerToEdit) {
-      navigation.navigate("NewLocation", {
+      navigation.navigate("NewLocationScreen", {
         location: {
           id: markerToEdit.id,
           name: markerToEdit.name,

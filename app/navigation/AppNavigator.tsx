@@ -1,11 +1,11 @@
 import React from "react";
-import { Home } from "@/app/screens/Home";
-import { LocationList } from "@/app/screens/LocationList";
+import { HomeScreen } from "@/app/screens/HomeScreen";
+import { LocationListScreen } from "@/app/screens/LocationListScreen";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Ionicons";
-import { NewLocation } from "../screens/NewLocation";
+import { NewLocationScreen } from "../screens/NewLocationScreen";
 import { RootStackParamList } from "./types";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -15,10 +15,10 @@ export default function AppNavigator() {
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
         <NavigationContainer>
-          <Stack.Navigator initialRouteName="Home">
+          <Stack.Navigator initialRouteName="HomeScreen">
             <Stack.Screen
-              name="Home"
-              component={Home}
+              name="HomeScreen"
+              component={HomeScreen}
               options={({ route, navigation }) => ({
                 headerTitle: route.name,
                 headerTintColor: "white",
@@ -35,8 +35,8 @@ export default function AppNavigator() {
               })}
             />
             <Stack.Screen
-              name="NewLocation"
-              component={NewLocation}
+              name="NewLocationScreen"
+              component={NewLocationScreen}
               options={({ navigation }) => ({
                 headerTitle: "Nova Localização",
                 headerTintColor: "white",
@@ -52,8 +52,8 @@ export default function AppNavigator() {
               })}
             />
             <Stack.Screen
-              name="LocationList"
-              component={LocationList}
+              name="LocationListScreen"
+              component={LocationListScreen}
               options={({ navigation }) => ({
                 headerTitle: "Todas as localizações",
                 headerTintColor: "white",
