@@ -29,7 +29,7 @@ export default function AppNavigator() {
                     name="menu"
                     size={25}
                     color="white"
-                    onPress={() => navigation.navigate("LocationList")}
+                    onPress={() => navigation.navigate("LocationListScreen")}
                   />
                 ),
               })}
