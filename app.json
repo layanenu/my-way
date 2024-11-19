@@ -3,7 +3,15 @@
     "name": "MyWay",
     "slug": "MyWay",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
+    "plugins": [
+      [
+        "expo-screen-orientation",
+        {
+          "initialOrientation": "default"
+        }
+      ]
+    ],
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -11,12 +19,14 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ios.myWay"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.android.myWay"
     },
     "web": {
       "bundler": "metro",
