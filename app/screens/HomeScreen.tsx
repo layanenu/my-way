@@ -1,5 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
-import { StyleSheet, Text, ScrollView, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
   NavigationProp,
@@ -14,6 +20,8 @@ import {
 } from "expo-location";
 import MapView, { LatLng, Marker } from "react-native-maps";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ScreenOrientation from "expo-screen-orientation";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export const HomeScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -22,8 +30,10 @@ export const HomeScreen = () => {
   const [markers, setMarkers] = useState<
     Array<{ id: string; name: string; coords: LatLng; color: string }>
   >([]);
+  const [orientation, setOrientation] = useState<string>("portrait");
 
   const mapRef = useRef<MapView>(null);
+  const insets = useSafeAreaInsets();
 
   const handleFabPress = () => {
     navigation.navigate("NewLocationScreen");
@@ -92,8 +102,28 @@ export const HomeScreen = () => {
     }
   };
 
+  const detectOrientation = async () => {
+    const currentOrientation = await ScreenOrientation.getOrientationAsync();
+    if (
+      currentOrientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
+      currentOrientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
+    ) {
+      setOrientation("landscape");
+    } else {
+      setOrientation("portrait");
+    }
+  };
+
   useEffect(() => {
     getLocation();
+    const subscription = ScreenOrientation.addOrientationChangeListener(() => {
+      detectOrientation();
+    });
+    detectOrientation();
+
+    return () => {
+      ScreenOrientation.removeOrientationChangeListener(subscription);
+    };
   }, []);
 
   useFocusEffect(
@@ -103,11 +133,22 @@ export const HomeScreen = () => {
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.container} bounces={false}>
+    <View
+      style={[
+        styles.container,
+        orientation === "landscape" && { paddingTop: 0, paddingBottom: 0 },
+      ]}
+    >
       {location ? (
         <MapView
           ref={mapRef}
-          style={styles.mapView}
+          style={[
+            styles.mapView,
+            orientation === "landscape" && {
+              top: -insets.top,
+              bottom: -insets.bottom,
+            },
+          ]}
           initialRegion={{
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
@@ -130,7 +171,7 @@ export const HomeScreen = () => {
       <TouchableOpacity style={styles.fab} onPress={handleFabPress}>
         <Ionicons name="add" size={24} color="white" />
       </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 };
 
@@ -156,6 +197,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   mapView: {
+    flex: 1,
     width: "100%",
     height: "100%",
   },
