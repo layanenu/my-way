@@ -1,5 +1,11 @@
-import React, { useState } from "react";
-import { StyleSheet, FlatList, View, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  FlatList,
+  View,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
 import LocationItem from "../components/LocationItem";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -9,6 +15,7 @@ import { Location } from "./NewLocationScreen";
 
 export const LocationListScreen = () => {
   const [locations, setLocations] = useState<Location[]>([]);
+  const [orientation, setOrientation] = useState("portrait");
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -23,6 +30,23 @@ export const LocationListScreen = () => {
     }
   };
 
+  const detectOrientation = () => {
+    const { width, height } = Dimensions.get("window");
+    setOrientation(width > height ? "landscape" : "portrait");
+  };
+
+  useEffect(() => {
+    detectOrientation();
+    const subscription = Dimensions.addEventListener(
+      "change",
+      detectOrientation
+    );
+
+    return () => {
+      subscription?.remove();
+    };
+  }, []);
+
   useFocusEffect(
     React.useCallback(() => {
       fetchLocations();
@@ -33,9 +57,12 @@ export const LocationListScreen = () => {
     navigation.navigate("NewLocationScreen", { location });
   };
 
+  const dynamicStyles = styles(orientation);
+
   return (
-    <View style={styles.container}>
+    <View style={dynamicStyles.container}>
       <FlatList
+        contentContainerStyle={dynamicStyles.flatlist}
         data={locations}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
@@ -53,10 +80,18 @@ export const LocationListScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    padding: 16,
-  },
-});
+const styles = (orientation: string) => {
+  const isLandscape = orientation === "landscape";
+
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: "#fff",
+      paddingTop: isLandscape ? 8 : 16,
+    },
+    flatlist: {
+      width: isLandscape ? "80%" : "100%",
+      alignSelf: "center",
+    },
+  });
+};

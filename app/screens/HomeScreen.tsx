@@ -1,16 +1,12 @@
 import React, { useEffect, useState, useRef } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  Dimensions,
-} from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
   NavigationProp,
+  RouteProp,
   useFocusEffect,
   useNavigation,
+  useRoute,
 } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/types";
 import {
@@ -18,22 +14,20 @@ import {
   requestForegroundPermissionsAsync,
   getCurrentPositionAsync,
 } from "expo-location";
-import MapView, { LatLng, Marker } from "react-native-maps";
+import MapView, { LatLng, Marker, Region } from "react-native-maps";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ScreenOrientation from "expo-screen-orientation";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export const HomeScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, "HomeScreen">>();
   const [location, setLocation] = useState<LocationObject | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [markers, setMarkers] = useState<
     Array<{ id: string; name: string; coords: LatLng; color: string }>
   >([]);
   const [orientation, setOrientation] = useState<string>("portrait");
-
   const mapRef = useRef<MapView>(null);
-  const insets = useSafeAreaInsets();
 
   const handleFabPress = () => {
     navigation.navigate("NewLocationScreen");
@@ -71,6 +65,23 @@ export const HomeScreen = () => {
     }
   };
 
+  const centerToCurrentLocation = () => {
+    if (location && mapRef.current) {
+      const { latitude, longitude } = location.coords;
+      mapRef.current.animateToRegion(
+        {
+          latitude,
+          longitude,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        },
+        1000
+      );
+    } else {
+      setMessage("Localização atual não está disponível.");
+    }
+  };
+
   const loadMarkers = async () => {
     try {
       const storedLocations = await AsyncStorage.getItem("locations");
@@ -86,16 +97,6 @@ export const HomeScreen = () => {
           color: location.markerColor,
         }));
         setMarkers(loadedMarkers);
-
-        if (locations.length > 0 && mapRef.current) {
-          const lastLocation = locations[locations.length - 1];
-          mapRef.current.animateToRegion({
-            latitude: parseFloat(lastLocation.latitude),
-            longitude: parseFloat(lastLocation.longitude),
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          });
-        }
       }
     } catch (error) {
       console.error("Erro ao carregar as localizações:", error);
@@ -129,26 +130,21 @@ export const HomeScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
       loadMarkers();
-    }, [])
+
+      if (route.params?.mapRegion && mapRef.current) {
+        mapRef.current.animateToRegion(route.params.mapRegion, 1000);
+      }
+    }, [route.params?.mapRegion])
   );
 
+  const dynamicStyles = styles(orientation);
+
   return (
-    <View
-      style={[
-        styles.container,
-        orientation === "landscape" && { paddingTop: 0, paddingBottom: 0 },
-      ]}
-    >
+    <View style={dynamicStyles.container}>
       {location ? (
         <MapView
           ref={mapRef}
-          style={[
-            styles.mapView,
-            orientation === "landscape" && {
-              top: -insets.top,
-              bottom: -insets.bottom,
-            },
-          ]}
+          style={dynamicStyles.mapView}
           initialRegion={{
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
@@ -168,37 +164,52 @@ export const HomeScreen = () => {
       ) : (
         <Text>Carregando mapa...</Text>
       )}
-      <TouchableOpacity style={styles.fab} onPress={handleFabPress}>
-        <Ionicons name="add" size={24} color="white" />
-      </TouchableOpacity>
+      <View style={dynamicStyles.fabContainer}>
+        <TouchableOpacity style={dynamicStyles.fab} onPress={handleFabPress}>
+          <Ionicons name="add" size={24} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={dynamicStyles.fab}
+          onPress={centerToCurrentLocation}
+        >
+          <Ionicons name="locate-outline" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  fab: {
-    position: "absolute",
-    right: 20,
-    bottom: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "black",
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-  },
-  mapView: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-  },
-});
+const styles = (orientation: string) => {
+  const isLandscape = orientation === "landscape";
+
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    fabContainer: {
+      position: "absolute",
+      right: isLandscape ? 60 : 20,
+      bottom: 20,
+      flexDirection: "column",
+      justifyContent: "space-between",
+      height: 120,
+    },
+    fab: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: "black",
+      justifyContent: "center",
+      alignItems: "center",
+      elevation: 5,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 2,
+      marginBottom: 10,
+    },
+    mapView: {
+      height: "100%",
+    },
+  });
+};
