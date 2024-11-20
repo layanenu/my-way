@@ -13,14 +13,14 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function AppNavigator() {
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
+      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <NavigationContainer>
           <Stack.Navigator initialRouteName="HomeScreen">
             <Stack.Screen
               name="HomeScreen"
               component={HomeScreen}
               options={({ route, navigation }) => ({
-                headerTitle: route.name,
+                headerTitle: "Home",
                 headerTintColor: "white",
                 headerTitleAlign: "left",
                 headerStyle: { backgroundColor: "#1D1E47" },
@@ -55,7 +55,7 @@ export default function AppNavigator() {
               name="LocationListScreen"
               component={LocationListScreen}
               options={({ navigation }) => ({
-                headerTitle: "Todas as localizações",
+                headerTitle: "Localizações salvas",
                 headerTintColor: "white",
                 headerLeft: () => (
                   <Icon

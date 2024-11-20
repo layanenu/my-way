@@ -6,6 +6,7 @@ import CustomButton from "../components/CustomButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { RootStackParamList } from "../navigation/types";
 import { RouteProp } from "@react-navigation/native";
+import * as ScreenOrientation from "expo-screen-orientation";
 
 type NewLocationScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -36,7 +37,32 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
   const [longitude, setLongitude] = useState("");
   const [markerColor, setMarkerColor] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [orientation, setOrientation] = useState("portrait");
   const location = route.params?.location;
+
+  useEffect(() => {
+    const detectOrientation = async () => {
+      const currentOrientation = await ScreenOrientation.getOrientationAsync();
+      if (
+        currentOrientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
+        currentOrientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
+      ) {
+        setOrientation("landscape");
+      } else {
+        setOrientation("portrait");
+      }
+    };
+
+    const subscription = ScreenOrientation.addOrientationChangeListener(() => {
+      detectOrientation();
+    });
+
+    detectOrientation();
+
+    return () => {
+      ScreenOrientation.removeOrientationChangeListener(subscription);
+    };
+  }, []);
 
   useEffect(() => {
     if (location) {
@@ -122,9 +148,30 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
     }
   };
 
+  const handleNavigateToMap = () => {
+    if (latitude && longitude) {
+      navigation.navigate("HomeScreen", {
+        mapRegion: {
+          latitude: parseFloat(latitude),
+          longitude: parseFloat(longitude),
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        },
+      });
+    } else {
+      Alert.alert("Erro", "Coordenadas inválidas.");
+    }
+  };
+
+  const dynamicStyles = styles(orientation, isEditing);
+
   return (
-    <ScrollView contentContainerStyle={styles.container} bounces={false}>
-      <View style={styles.inputContainer}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={dynamicStyles.container}
+      bounces={false}
+    >
+      <View style={dynamicStyles.inputContainer}>
         <CustomInput
           placeholder="Nome da localização"
           value={locationName}
@@ -148,29 +195,53 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
           onChangeText={setMarkerColor}
         />
       </View>
-      <CustomButton
-        color="black"
-        name={isEditing ? "Atualizar Localização" : "Salvar Localização"}
-        onPress={handleSave}
-      />
-      {isEditing && (
+      <View style={dynamicStyles.btnContainer}>
         <CustomButton
-          color="gray"
-          name="Remover Localização"
-          onPress={handleDelete}
+          color="black"
+          name={isEditing ? "Atualizar Localização" : "Salvar Localização"}
+          onPress={handleSave}
         />
-      )}
+        {isEditing && (
+          <>
+            <CustomButton
+              color="gray"
+              name="Remover Localização"
+              onPress={handleDelete}
+            />
+            <CustomButton
+              color="brown"
+              name="Ir até a localização no mapa"
+              onPress={handleNavigateToMap}
+            />
+          </>
+        )}
+      </View>
     </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    paddingHorizontal: 16,
-  },
-  inputContainer: {
-    marginTop: 20,
-  },
-});
+const styles = (orientation: string, isEditing: boolean) => {
+  const isLandscape = orientation === "landscape";
+
+  return StyleSheet.create({
+    container: {
+      flexGrow: 1,
+      backgroundColor: "#fff",
+      paddingHorizontal: 16,
+      paddingBottom: 24,
+      alignItems: "center",
+    },
+    inputContainer: {
+      marginTop: 20,
+      padding: isLandscape ? 8 : 0,
+      borderRadius: 8,
+      width: isLandscape ? "90%" : "100%",
+    },
+    btnContainer: {
+      paddingHorizontal: isLandscape && isEditing ? 8 : 0,
+      width: isEditing ? (isLandscape ? "90%" : "100%") : "70%",
+      flexDirection: isEditing && isLandscape ? "row" : "column",
+      justifyContent: isEditing ? "space-between" : "center",
+    },
+  });
+};
