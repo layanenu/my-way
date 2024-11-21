@@ -1,84 +1,77 @@
 import React, { useEffect, useState, useRef } from "react";
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  useWindowDimensions,
+} from "react-native";
+import MapView, { Marker } from "react-native-maps";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import {
   NavigationProp,
   RouteProp,
-  useFocusEffect,
   useNavigation,
   useRoute,
 } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/types";
-import {
-  LocationObject,
-  requestForegroundPermissionsAsync,
-  getCurrentPositionAsync,
-} from "expo-location";
-import MapView, { LatLng, Marker, Region } from "react-native-maps";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as ScreenOrientation from "expo-screen-orientation";
+import * as Location from "expo-location";
+import LocationItem from "../components/LocationItem";
 
 export const HomeScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, "HomeScreen">>();
-  const [location, setLocation] = useState<LocationObject | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [markers, setMarkers] = useState<
-    Array<{ id: string; name: string; coords: LatLng; color: string }>
+    Array<{
+      id: string;
+      name: string;
+      coords: { latitude: number; longitude: number };
+      color: string;
+    }>
   >([]);
-  const [orientation, setOrientation] = useState<string>("portrait");
+  const [location, setLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const mapRef = useRef<MapView>(null);
 
-  const handleFabPress = () => {
-    navigation.navigate("NewLocationScreen");
-  };
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 600;
 
-  const handleMarkerPress = (markerId: string) => {
-    const markerToEdit = markers.find((marker) => marker.id === markerId);
-    if (markerToEdit) {
-      navigation.navigate("NewLocationScreen", {
-        location: {
-          id: markerToEdit.id,
-          name: markerToEdit.name,
-          latitude: markerToEdit.coords.latitude.toString(),
-          longitude: markerToEdit.coords.longitude.toString(),
-          markerColor: markerToEdit.color,
-        },
-      });
-    }
-  };
+  useEffect(() => {
+    loadMarkers();
+    getUserLocation();
+  }, []);
 
-  const getLocation = async () => {
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      if (route.params?.mapRegion && mapRef.current) {
+        mapRef.current.animateToRegion(route.params.mapRegion, 1000);
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, route.params]);
+
+  const getUserLocation = async () => {
     try {
-      const { status } = await requestForegroundPermissionsAsync();
-
+      const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        setMessage("A permissão foi negada!");
+        setErrorMsg("Permissão de localização negada.");
         return;
       }
 
-      const locationData = await getCurrentPositionAsync();
-      setLocation(locationData);
-      setMessage(null);
+      const location = await Location.getCurrentPositionAsync({});
+      setLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
     } catch (error) {
-      setMessage("Erro ao obter a localização");
-    }
-  };
-
-  const centerToCurrentLocation = () => {
-    if (location && mapRef.current) {
-      const { latitude, longitude } = location.coords;
-      mapRef.current.animateToRegion(
-        {
-          latitude,
-          longitude,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        },
-        1000
-      );
-    } else {
-      setMessage("Localização atual não está disponível.");
+      setErrorMsg("Erro ao obter localização.");
+      console.error(error);
     }
   };
 
@@ -99,79 +92,99 @@ export const HomeScreen = () => {
         setMarkers(loadedMarkers);
       }
     } catch (error) {
-      console.error("Erro ao carregar as localizações:", error);
+      console.error("Erro ao carregar localizações:", error);
     }
   };
 
-  const detectOrientation = async () => {
-    const currentOrientation = await ScreenOrientation.getOrientationAsync();
-    if (
-      currentOrientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
-      currentOrientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
-    ) {
-      setOrientation("landscape");
+  const handleFabPress = () => {
+    navigation.navigate("NewLocationScreen");
+  };
+
+  const handleMarkerPress = (markerId: string) => {
+    const markerToEdit = markers.find((marker) => marker.id === markerId);
+    if (markerToEdit) {
+      navigation.navigate("NewLocationScreen", {
+        location: {
+          id: markerToEdit.id,
+          name: markerToEdit.name,
+          latitude: markerToEdit.coords.latitude.toString(),
+          longitude: markerToEdit.coords.longitude.toString(),
+          markerColor: markerToEdit.color,
+        },
+      });
+    }
+  };
+
+  const centerToCurrentLocation = () => {
+    if (location && mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        },
+        1000
+      );
     } else {
-      setOrientation("portrait");
+      setErrorMsg("Localização atual não está disponível.");
     }
   };
-
-  useEffect(() => {
-    getLocation();
-    const subscription = ScreenOrientation.addOrientationChangeListener(() => {
-      detectOrientation();
-    });
-    detectOrientation();
-
-    return () => {
-      ScreenOrientation.removeOrientationChangeListener(subscription);
-    };
-  }, []);
-
-  useFocusEffect(
-    React.useCallback(() => {
-      loadMarkers();
-
-      if (route.params?.mapRegion && mapRef.current) {
-        mapRef.current.animateToRegion(route.params.mapRegion, 1000);
-      }
-    }, [route.params?.mapRegion])
-  );
-
-  const dynamicStyles = styles(orientation);
 
   return (
-    <View style={dynamicStyles.container}>
+    <View style={styles.container}>
       {location ? (
-        <MapView
-          ref={mapRef}
-          style={dynamicStyles.mapView}
-          initialRegion={{
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          }}
-        >
-          {markers.map((marker) => (
-            <Marker
-              key={marker.id}
-              coordinate={marker.coords}
-              pinColor={marker.color}
-              onPress={() => handleMarkerPress(marker.id)}
-            />
-          ))}
-        </MapView>
+        <View style={[styles.content, isTablet && styles.tabletContent]}>
+          <MapView
+            ref={mapRef}
+            style={[styles.mapView, isTablet && styles.tabletMapView]}
+            initialRegion={{
+              latitude: location.latitude,
+              longitude: location.longitude,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
+            }}
+          >
+            {markers.map((marker) => (
+              <Marker
+                key={marker.id}
+                coordinate={marker.coords}
+                pinColor={marker.color}
+                onPress={() => handleMarkerPress(marker.id)}
+              />
+            ))}
+          </MapView>
+
+          {isTablet && (
+            <View style={styles.locationListContainer}>
+              <FlatList
+                data={markers}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity onPress={() => handleMarkerPress(item.id)}>
+                    <LocationItem
+                      iconName="location-outline"
+                      title={item.name}
+                      latitude={item.coords.latitude}
+                      longitude={item.coords.longitude}
+                    />
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          )}
+        </View>
       ) : (
-        <Text>Carregando mapa...</Text>
+        <Text style={styles.errorText}>
+          {errorMsg || "Obtendo localização..."}
+        </Text>
       )}
-      <View style={dynamicStyles.fabContainer}>
-        <TouchableOpacity style={dynamicStyles.fab} onPress={handleFabPress}>
+
+      <View style={styles.fabContainer}>
+        <TouchableOpacity style={styles.fab} onPress={handleFabPress}>
           <Ionicons name="add" size={24} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={dynamicStyles.fab}
-          onPress={centerToCurrentLocation}
-        >
+        <TouchableOpacity style={styles.fab} onPress={centerToCurrentLocation}>
           <Ionicons name="locate-outline" size={24} color="white" />
         </TouchableOpacity>
       </View>
@@ -179,37 +192,62 @@ export const HomeScreen = () => {
   );
 };
 
-const styles = (orientation: string) => {
-  const isLandscape = orientation === "landscape";
-
-  return StyleSheet.create({
-    container: {
-      flex: 1,
-    },
-    fabContainer: {
-      position: "absolute",
-      right: isLandscape ? 60 : 20,
-      bottom: 20,
-      flexDirection: "column",
-      justifyContent: "space-between",
-      height: 120,
-    },
-    fab: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
-      backgroundColor: "black",
-      justifyContent: "center",
-      alignItems: "center",
-      elevation: 5,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.3,
-      shadowRadius: 2,
-      marginBottom: 10,
-    },
-    mapView: {
-      height: "100%",
-    },
-  });
-};
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  content: {
+    flex: 1,
+  },
+  tabletContent: {
+    flexDirection: "row",
+  },
+  mapView: {
+    flex: 1,
+  },
+  tabletMapView: {
+    flex: 2,
+  },
+  locationListContainer: {
+    flex: 1,
+    padding: 8,
+    backgroundColor: "#f9f9f9",
+    borderLeftWidth: 1,
+    borderLeftColor: "#ddd",
+  },
+  locationItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  locationText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: "#333",
+  },
+  fabContainer: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    flexDirection: "column",
+    gap: 10,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "black",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5,
+  },
+  errorText: {
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+    color: "black",
+  },
+});

@@ -5,8 +5,8 @@ import { Ionicons } from "@expo/vector-icons";
 export interface ILocationItem {
   iconName: React.ComponentProps<typeof Ionicons>["name"];
   title: string;
-  latitude: string;
-  longitude: string;
+  latitude: string | number;
+  longitude: string | number;
 }
 
 const LocationItem = ({
