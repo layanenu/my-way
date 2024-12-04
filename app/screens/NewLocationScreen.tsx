@@ -7,6 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { RootStackParamList } from "../navigation/types";
 import { RouteProp } from "@react-navigation/native";
 import * as ScreenOrientation from "expo-screen-orientation";
+import { backgroundColor } from "../styles/global.styles";
 
 type NewLocationScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -197,7 +198,8 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
       </View>
       <View style={dynamicStyles.btnContainer}>
         <CustomButton
-          color="black"
+          color={backgroundColor.customButton}
+          ButtonTextColor={backgroundColor.ButtonTextColor}
           name={isEditing ? "Atualizar Localização" : "Salvar Localização"}
           onPress={handleSave}
         />
@@ -226,7 +228,7 @@ const styles = (orientation: string, isEditing: boolean) => {
   return StyleSheet.create({
     container: {
       flexGrow: 1,
-      backgroundColor: "#fff",
+      backgroundColor: backgroundColor.backgroundScreen,
       paddingHorizontal: 16,
       paddingBottom: 24,
       alignItems: "center",

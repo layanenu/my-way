@@ -5,12 +5,20 @@ interface ICustomButtonProps {
   color: string;
   name: string;
   onPress: () => void;
+  ButtonTextColor?: string;
 }
 
-const CustomButton = ({ color, name, onPress }: ICustomButtonProps) => {
+const CustomButton = ({
+  color,
+  name,
+  onPress,
+  ButtonTextColor,
+}: ICustomButtonProps) => {
   return (
     <ButtonContainer color={color} onPress={onPress}>
-      <ButtonText>{name}</ButtonText>
+      <ButtonText ButtonTextColor={ButtonTextColor ?? "#FFFFFF"}>
+        {name}
+      </ButtonText>
     </ButtonContainer>
   );
 };
@@ -25,8 +33,8 @@ const ButtonContainer = styled.TouchableOpacity<{ color: string }>`
   background-color: ${(props) => props.color};
 `;
 
-const ButtonText = styled.Text`
-  color: #fff;
+const ButtonText = styled.Text<{ ButtonTextColor: string }>`
+  color: ${(props) => props.ButtonTextColor};
   font-size: 16px;
   font-weight: bold;
 `;

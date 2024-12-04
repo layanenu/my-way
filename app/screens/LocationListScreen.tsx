@@ -12,6 +12,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { Location } from "./NewLocationScreen";
+import { backgroundColor } from "../styles/global.styles";
 
 export const LocationListScreen = () => {
   const [locations, setLocations] = useState<Location[]>([]);
@@ -86,7 +87,7 @@ const styles = (orientation: string) => {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: "#fff",
+      backgroundColor: backgroundColor.backgroundScreen,
       paddingTop: isLandscape ? 8 : 16,
     },
     flatlist: {

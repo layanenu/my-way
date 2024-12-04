@@ -18,6 +18,7 @@ const CustomInput = ({
     <TextInput
       style={styles.input}
       placeholder={placeholder}
+      placeholderTextColor="#808080"
       value={value}
       onChangeText={onChangeText}
       keyboardType={keyboardType}
@@ -33,6 +34,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
     fontSize: 16,
+    backgroundColor: "#FFFFFF",
   },
 });
 

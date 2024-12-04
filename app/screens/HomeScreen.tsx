@@ -19,6 +19,7 @@ import {
 import { RootStackParamList } from "../navigation/types";
 import * as Location from "expo-location";
 import LocationItem from "../components/LocationItem";
+import { backgroundColor } from "../styles/global.styles";
 
 export const HomeScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -182,10 +183,14 @@ export const HomeScreen = () => {
 
       <View style={styles.fabContainer}>
         <TouchableOpacity style={styles.fab} onPress={handleFabPress}>
-          <Ionicons name="add" size={24} color="white" />
+          <Ionicons name="add" size={24} color={backgroundColor.Ionicons} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.fab} onPress={centerToCurrentLocation}>
-          <Ionicons name="locate-outline" size={24} color="white" />
+          <Ionicons
+            name="locate-outline"
+            size={24}
+            color={backgroundColor.Ionicons}
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -239,7 +244,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "black",
+    backgroundColor: backgroundColor.fab,
     justifyContent: "center",
     alignItems: "center",
     elevation: 5,
