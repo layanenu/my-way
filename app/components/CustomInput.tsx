@@ -1,5 +1,6 @@
 import React from "react";
-import { TextInput, StyleSheet, KeyboardTypeOptions } from "react-native";
+import { Input } from "native-base";
+import { KeyboardTypeOptions } from "react-native/Libraries/Components/TextInput/TextInput";
 
 interface ICustomInput {
   placeholder: string;
@@ -15,27 +16,21 @@ const CustomInput = ({
   keyboardType,
 }: ICustomInput) => {
   return (
-    <TextInput
-      style={styles.input}
+    <Input
       placeholder={placeholder}
-      placeholderTextColor="#808080"
       value={value}
       onChangeText={onChangeText}
       keyboardType={keyboardType}
+      borderWidth="1"
+      borderColor="#ccc"
+      borderRadius="8"
+      padding="12px"
+      fontSize="16px"
+      marginBottom="16px"
+      backgroundColor="#FFFFFF"
+      placeholderTextColor="#808080"
     />
   );
 };
-
-const styles = StyleSheet.create({
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    fontSize: 16,
-    backgroundColor: "#FFFFFF",
-  },
-});
 
 export default CustomInput;

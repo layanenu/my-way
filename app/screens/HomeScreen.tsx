@@ -43,6 +43,7 @@ export const HomeScreen = () => {
   const isTablet = width >= 600;
 
   useEffect(() => {
+    // (async () => await AsyncStorage.clear())();
     loadMarkers();
     getUserLocation();
   }, []);
@@ -164,7 +165,6 @@ export const HomeScreen = () => {
                 renderItem={({ item }) => (
                   <TouchableOpacity onPress={() => handleMarkerPress(item.id)}>
                     <LocationItem
-                      iconName="location-outline"
                       title={item.name}
                       latitude={item.coords.latitude}
                       longitude={item.coords.longitude}

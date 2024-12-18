@@ -8,6 +8,7 @@ import { RootStackParamList } from "../navigation/types";
 import { RouteProp } from "@react-navigation/native";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { backgroundColor } from "../styles/global.styles";
+import { isHexColor, isRealNumber } from "../utils/validations";
 
 type NewLocationScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -86,6 +87,19 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
   const handleSave = async () => {
     if (!locationName || !latitude || !longitude || !markerColor) {
       Alert.alert("Erro", "Por favor, preencha todos os campos.");
+      return;
+    }
+
+    if (!isRealNumber(latitude) || !isRealNumber(longitude)) {
+      Alert.alert("Erro", "Esse campo somente aceita valores numericos");
+      return;
+    }
+
+    if (!isHexColor(markerColor)) {
+      Alert.alert(
+        "Erro",
+        "Esse campo somente aceita cores em formato de hexadecimais"
+      );
       return;
     }
 
@@ -198,7 +212,7 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
       </View>
       <View style={dynamicStyles.btnContainer}>
         <CustomButton
-          color={backgroundColor.customButton}
+          color="info"
           ButtonTextColor={backgroundColor.ButtonTextColor}
           name={isEditing ? "Atualizar Localização" : "Salvar Localização"}
           onPress={handleSave}
@@ -206,12 +220,12 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
         {isEditing && (
           <>
             <CustomButton
-              color="gray"
+              color="danger"
               name="Remover Localização"
               onPress={handleDelete}
             />
             <CustomButton
-              color="brown"
+              color="warning"
               name="Ir até a localização no mapa"
               onPress={handleNavigateToMap}
             />
