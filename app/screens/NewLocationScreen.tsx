@@ -3,12 +3,12 @@ import { StyleSheet, ScrollView, View, Alert } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { RootStackParamList } from "../navigation/types";
 import { RouteProp } from "@react-navigation/native";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { backgroundColor } from "../styles/global.styles";
 import { isHexColor, isRealNumber } from "../utils/validations";
+import { useMarkers } from "../context/markersContext";
 
 type NewLocationScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -34,6 +34,7 @@ export interface Location {
 }
 
 export const NewLocationScreen = ({ navigation, route }: Props) => {
+  const { markers, setMarkers } = useMarkers();
   const [locationName, setLocationName] = useState("");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
@@ -112,19 +113,15 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
     };
 
     try {
-      const existingLocations = await AsyncStorage.getItem("locations");
-      const locations = existingLocations ? JSON.parse(existingLocations) : [];
-
       if (isEditing) {
-        const index = locations.findIndex(
-          (loc: Location) => loc.id === location?.id
+        const updatedMarkers = markers.map((marker) =>
+          marker.id === location?.id ? newLocation : marker
         );
-        locations[index] = newLocation;
+        setMarkers(updatedMarkers);
       } else {
-        locations.push(newLocation);
+        setMarkers((prevMarkers) => [...prevMarkers, newLocation]);
       }
 
-      await AsyncStorage.setItem("locations", JSON.stringify(locations));
       Alert.alert(
         "Sucesso",
         isEditing ? "Localização atualizada!" : "Localização salva!"
@@ -146,14 +143,11 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
     if (!isEditing || !location) return;
 
     try {
-      const existingLocations = await AsyncStorage.getItem("locations");
-      const locations = existingLocations ? JSON.parse(existingLocations) : [];
-
-      const updatedLocations = locations.filter(
-        (loc: Location) => loc.id !== location.id
+      const updatedMarkers = markers.filter(
+        (marker) => marker.id !== location.id
       );
+      setMarkers(updatedMarkers);
 
-      await AsyncStorage.setItem("locations", JSON.stringify(updatedLocations));
       Alert.alert("Sucesso", "Localização removida!");
 
       navigation.navigate("LocationListScreen");
@@ -177,7 +171,6 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
       Alert.alert("Erro", "Coordenadas inválidas.");
     }
   };
-
   const dynamicStyles = styles(orientation, isEditing);
 
   return (

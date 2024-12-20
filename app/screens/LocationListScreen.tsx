@@ -5,16 +5,18 @@ import {
   View,
   TouchableOpacity,
   Dimensions,
+  Alert,
 } from "react-native";
 import LocationItem from "../components/LocationItem";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { Location } from "./NewLocationScreen";
 import { backgroundColor } from "../styles/global.styles";
+import { Marker, useMarkers } from "../context/markersContext";
 
 export const LocationListScreen = () => {
+  const { markers, setMarkers } = useMarkers();
   const [locations, setLocations] = useState<Location[]>([]);
   const [orientation, setOrientation] = useState("portrait");
   const navigation =
@@ -22,12 +24,20 @@ export const LocationListScreen = () => {
 
   const fetchLocations = async () => {
     try {
-      const storedLocations = await AsyncStorage.getItem("locations");
-      if (storedLocations) {
-        setLocations(JSON.parse(storedLocations));
+      if (markers.length) {
+        setLocations(markers as Location[]);
       }
     } catch (error) {
       console.error("Erro ao carregar as localizações:", error);
+    }
+  };
+
+  const handleDelete = (item: Marker) => {
+    if (item?.id) {
+      const filterMaker = markers.filter((m) => m.id !== item?.id);
+      setMarkers(filterMaker);
+      setLocations(filterMaker as Location[]);
+      Alert.alert("O item foi excluído");
     }
   };
 
@@ -69,10 +79,10 @@ export const LocationListScreen = () => {
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => handleLocationPress(item)}>
             <LocationItem
-              iconName="location-outline"
               title={item.name}
               latitude={item.latitude}
               longitude={item.longitude}
+              onDelete={() => handleDelete(item)}
             />
           </TouchableOpacity>
         )}

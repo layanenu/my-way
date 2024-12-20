@@ -4,6 +4,7 @@ import { Button } from "native-base";
 interface ICustomButtonProps {
   color: string;
   name: string;
+  size?: string;
   onPress: () => void;
   ButtonTextColor?: string;
 }
@@ -12,6 +13,7 @@ const CustomButton = ({
   color,
   name,
   onPress,
+  size = "sm",
   ButtonTextColor = "#FFFFFF",
 }: ICustomButtonProps) => {
   return (
@@ -23,6 +25,7 @@ const CustomButton = ({
       paddingY="12px"
       paddingX="20px"
       marginY="8px"
+      size={size}
     >
       {name}
     </Button>

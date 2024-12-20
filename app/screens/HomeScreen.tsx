@@ -20,10 +20,13 @@ import { RootStackParamList } from "../navigation/types";
 import * as Location from "expo-location";
 import LocationItem from "../components/LocationItem";
 import { backgroundColor } from "../styles/global.styles";
+import { useMarkers } from "../context/markersContext";
 
 export const HomeScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, "HomeScreen">>();
+  const { markers: markersContext } = useMarkers();
+
   const [markers, setMarkers] = useState<
     Array<{
       id: string;
@@ -79,10 +82,8 @@ export const HomeScreen = () => {
 
   const loadMarkers = async () => {
     try {
-      const storedLocations = await AsyncStorage.getItem("locations");
-      if (storedLocations) {
-        const locations = JSON.parse(storedLocations);
-        const loadedMarkers = locations.map((location: any) => ({
+      if (markersContext.length) {
+        const loadedMarkers = markersContext.map((location: any) => ({
           id: location.id,
           name: location.name,
           coords: {
