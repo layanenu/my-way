@@ -57,13 +57,33 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
   const [fetchCountry, { loading, data, error }] =
     useLazyQuery(GET_COUNTRY_BY_NAME);
 
-  const handleCurrency = () => {
-    if (country.length) {
-      fetchCountry({ variables: { name: country.trim() } });
-      const [countryData] = data?.countries || [];
-      setCurrency(countryData?.currency || "");
+  const fetchCountryHandler = async () => {
+    if (!country.trim()) {
+      Alert.alert("Erro", "Por favor, insira o nome do país.");
+      return;
+    }
+    try {
+      await fetchCountry({ variables: { name: country.trim() } });
+    } catch (err) {
+      console.error("Erro ao buscar moeda:", err);
     }
   };
+  {
+    loading && <Text>Carregando dados do país...</Text>;
+  }
+  {
+    error && <Text>Erro ao buscar dados do país. Tente novamente.</Text>;
+  }
+
+  useEffect(() => {
+    if (data && data.countries) {
+      const [countryData] = data.countries;
+      if (countryData?.currency) {
+        setCurrency(countryData.currency);
+      }
+    }
+  }, [data]);
+
   useEffect(() => {
     const detectOrientation = async () => {
       const currentOrientation = await ScreenOrientation.getOrientationAsync();
@@ -237,7 +257,9 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
           value={country}
           onChangeText={setCountry}
         />
-        <Text>Clique no botao procurar moeda para preencher o campo moeda</Text>
+        <Text style={dynamicStyles.text}>
+          Clique no botao "Procurar moeda" para preencher o campo moeda
+        </Text>
         <CustomInput
           placeholder="Moeda"
           value={currency}
@@ -247,7 +269,7 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
       </View>
       <View style={dynamicStyles.btnContainer}>
         <CustomButton
-          onPress={handleCurrency}
+          onPress={fetchCountryHandler}
           color="warning"
           name="Procurar Moeda"
         />
@@ -298,6 +320,12 @@ const styles = (orientation: string, isEditing: boolean) => {
       width: isEditing ? (isLandscape ? "90%" : "100%") : "70%",
       flexDirection: isEditing && isLandscape ? "row" : "column",
       justifyContent: isEditing ? "space-between" : "center",
+    },
+    text: {
+      color: "gray",
+      width: "100%",
+      marginBottom: 10,
+      textAlign: "center",
     },
   });
 };
