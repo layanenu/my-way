@@ -8,7 +8,6 @@ import {
   useWindowDimensions,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import {
   NavigationProp,
@@ -25,16 +24,8 @@ import { useMarkers } from "../context/markersContext";
 export const HomeScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, "HomeScreen">>();
-  const { markers: markersContext } = useMarkers();
+  const { markers } = useMarkers();
 
-  const [markers, setMarkers] = useState<
-    Array<{
-      id: string;
-      name: string;
-      coords: { latitude: number; longitude: number };
-      color: string;
-    }>
-  >([]);
   const [location, setLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -46,8 +37,6 @@ export const HomeScreen = () => {
   const isTablet = width >= 600;
 
   useEffect(() => {
-    // (async () => await AsyncStorage.clear())();
-    loadMarkers();
     getUserLocation();
   }, []);
 
@@ -80,25 +69,6 @@ export const HomeScreen = () => {
     }
   };
 
-  const loadMarkers = async () => {
-    try {
-      if (markersContext.length) {
-        const loadedMarkers = markersContext.map((location: any) => ({
-          id: location.id,
-          name: location.name,
-          coords: {
-            latitude: parseFloat(location.latitude),
-            longitude: parseFloat(location.longitude),
-          },
-          color: location.markerColor,
-        }));
-        setMarkers(loadedMarkers);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar localizações:", error);
-    }
-  };
-
   const handleFabPress = () => {
     navigation.navigate("NewLocationScreen");
   };
@@ -110,9 +80,9 @@ export const HomeScreen = () => {
         location: {
           id: markerToEdit.id,
           name: markerToEdit.name,
-          latitude: markerToEdit.coords.latitude.toString(),
-          longitude: markerToEdit.coords.longitude.toString(),
-          markerColor: markerToEdit.color,
+          latitude: markerToEdit.latitude,
+          longitude: markerToEdit.longitude,
+          markerColor: markerToEdit.markerColor,
         },
       });
     }
@@ -151,9 +121,12 @@ export const HomeScreen = () => {
             {markers.map((marker) => (
               <Marker
                 key={marker.id}
-                coordinate={marker.coords}
-                pinColor={marker.color}
-                onPress={() => handleMarkerPress(marker.id)}
+                coordinate={{
+                  latitude: parseFloat(marker.latitude),
+                  longitude: parseFloat(marker.longitude),
+                }}
+                pinColor={marker.markerColor}
+                onPress={() => handleMarkerPress(marker.id || "")}
               />
             ))}
           </MapView>
@@ -162,13 +135,15 @@ export const HomeScreen = () => {
             <View style={styles.locationListContainer}>
               <FlatList
                 data={markers}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item.id || ""}
                 renderItem={({ item }) => (
-                  <TouchableOpacity onPress={() => handleMarkerPress(item.id)}>
+                  <TouchableOpacity
+                    onPress={() => handleMarkerPress(item.id || "")}
+                  >
                     <LocationItem
                       title={item.name}
-                      latitude={item.coords.latitude}
-                      longitude={item.coords.longitude}
+                      latitude={parseFloat(item.latitude)}
+                      longitude={parseFloat(item.longitude)}
                       onDelete={() => {}}
                     />
                   </TouchableOpacity>

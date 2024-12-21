@@ -8,7 +8,7 @@ import { RouteProp } from "@react-navigation/native";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { backgroundColor } from "../styles/global.styles";
 import { isHexColor, isRealNumber } from "../utils/validations";
-import { useMarkers } from "../context/markersContext";
+import { useMarkers, Marker } from "../context/markersContext";
 import { gql, useLazyQuery } from "@apollo/client";
 
 type NewLocationScreenNavigationProp = NativeStackNavigationProp<
@@ -26,14 +26,6 @@ type Props = {
   route: NewLocationScreenRouteProp;
 };
 
-export interface Location {
-  id: string;
-  name: string;
-  latitude: string;
-  longitude: string;
-  markerColor: string;
-}
-
 const GET_COUNTRY_BY_NAME = gql`
   query GetCountryByName($name: String!) {
     countries(filter: { name: { eq: $name } }) {
@@ -44,7 +36,7 @@ const GET_COUNTRY_BY_NAME = gql`
 `;
 
 export const NewLocationScreen = ({ navigation, route }: Props) => {
-  const { markers, setMarkers } = useMarkers();
+  const { addMarker, updateMarker, deleteMarker } = useMarkers();
   const [currency, setCurrency] = useState("");
   const [country, setCountry] = useState("");
   const [locationName, setLocationName] = useState("");
@@ -68,12 +60,6 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
       console.error("Erro ao buscar moeda:", err);
     }
   };
-  {
-    loading && <Text>Carregando dados do país...</Text>;
-  }
-  {
-    error && <Text>Erro ao buscar dados do país. Tente novamente.</Text>;
-  }
 
   useEffect(() => {
     if (data && data.countries) {
@@ -140,20 +126,19 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
     }
 
     if (!isRealNumber(latitude) || !isRealNumber(longitude)) {
-      Alert.alert("Erro", "Esse campo somente aceita valores numericos");
+      Alert.alert("Erro", "Esse campo somente aceita valores numéricos.");
       return;
     }
 
     if (!isHexColor(markerColor)) {
       Alert.alert(
         "Erro",
-        "Esse campo somente aceita cores em formato de hexadecimais"
+        "Esse campo somente aceita cores em formato hexadecimal."
       );
       return;
     }
 
-    const newLocation = {
-      id: isEditing ? location?.id : Date.now().toString(),
+    const newMarker: Marker = {
       name: locationName,
       latitude,
       longitude,
@@ -163,25 +148,13 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
     };
 
     try {
-      if (isEditing) {
-        const updatedMarkers = markers.map((marker) =>
-          marker.id === location?.id ? newLocation : marker
-        );
-        setMarkers(updatedMarkers);
+      if (isEditing && location?.id) {
+        await updateMarker({ ...newMarker, id: location.id });
+        Alert.alert("Sucesso", "Localização atualizada!");
       } else {
-        setMarkers((prevMarkers) => [...prevMarkers, newLocation]);
+        await addMarker(newMarker);
+        Alert.alert("Sucesso", "Localização salva!");
       }
-
-      Alert.alert(
-        "Sucesso",
-        isEditing ? "Localização atualizada!" : "Localização salva!"
-      );
-
-      setLocationName("");
-      setLatitude("");
-      setLongitude("");
-      setMarkerColor("");
-
       navigation.navigate("LocationListScreen");
     } catch (error) {
       Alert.alert("Erro", "Falha ao salvar a localização. Tente novamente.");
@@ -193,13 +166,8 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
     if (!isEditing || !location) return;
 
     try {
-      const updatedMarkers = markers.filter(
-        (marker) => marker.id !== location.id
-      );
-      setMarkers(updatedMarkers);
-
+      await deleteMarker(location.id);
       Alert.alert("Sucesso", "Localização removida!");
-
       navigation.navigate("LocationListScreen");
     } catch (error) {
       Alert.alert("Erro", "Falha ao remover a localização. Tente novamente.");
@@ -221,6 +189,7 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
       Alert.alert("Erro", "Coordenadas inválidas.");
     }
   };
+
   const dynamicStyles = styles(orientation, isEditing);
 
   return (
@@ -258,13 +227,12 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
           onChangeText={setCountry}
         />
         <Text style={dynamicStyles.text}>
-          Clique no botao "Procurar moeda" para preencher o campo moeda
+          Clique no botão "Procurar moeda" para preencher o campo moeda.
         </Text>
         <CustomInput
           placeholder="Moeda"
           value={currency}
           onChangeText={setCurrency}
-          disabled={true}
         />
       </View>
       <View style={dynamicStyles.btnContainer}>

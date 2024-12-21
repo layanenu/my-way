@@ -1,13 +1,7 @@
 import AppNavigator from "./app/navigation/AppNavigator";
 import { NativeBaseProvider } from "native-base";
 import { AppContextProvider } from "./app/context/appContextProvider";
-import {
-  ApolloClient,
-  InMemoryCache,
-  ApolloProvider,
-  gql,
-  useLazyQuery,
-} from "@apollo/client";
+import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
 
 export default function App() {
   const client = new ApolloClient({

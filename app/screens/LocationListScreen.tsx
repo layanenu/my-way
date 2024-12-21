@@ -11,35 +11,14 @@ import LocationItem from "../components/LocationItem";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
-import { Location } from "./NewLocationScreen";
-import { backgroundColor } from "../styles/global.styles";
 import { Marker, useMarkers } from "../context/markersContext";
+import { backgroundColor } from "../styles/global.styles";
 
 export const LocationListScreen = () => {
-  const { markers, setMarkers } = useMarkers();
-  const [locations, setLocations] = useState<Location[]>([]);
+  const { markers, deleteMarker } = useMarkers();
   const [orientation, setOrientation] = useState("portrait");
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-
-  const fetchLocations = async () => {
-    try {
-      if (markers.length) {
-        setLocations(markers as Location[]);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar as localizações:", error);
-    }
-  };
-
-  const handleDelete = (item: Marker) => {
-    if (item?.id) {
-      const filterMaker = markers.filter((m) => m.id !== item?.id);
-      setMarkers(filterMaker);
-      setLocations(filterMaker as Location[]);
-      Alert.alert("O item foi excluído");
-    }
-  };
 
   const detectOrientation = () => {
     const { width, height } = Dimensions.get("window");
@@ -58,13 +37,19 @@ export const LocationListScreen = () => {
     };
   }, []);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchLocations();
-    }, [])
-  );
+  const handleDelete = async (item: Marker) => {
+    if (item?.id) {
+      try {
+        await deleteMarker(item.id);
+        Alert.alert("Sucesso", "O item foi excluído!");
+      } catch (error) {
+        Alert.alert("Erro", "Não foi possível excluir o item.");
+        console.error("Erro ao excluir marcador:", error);
+      }
+    }
+  };
 
-  const handleLocationPress = (location: Location) => {
+  const handleLocationPress = (location: Marker) => {
     navigation.navigate("NewLocationScreen", { location });
   };
 
@@ -74,8 +59,8 @@ export const LocationListScreen = () => {
     <View style={dynamicStyles.container}>
       <FlatList
         contentContainerStyle={dynamicStyles.flatlist}
-        data={locations}
-        keyExtractor={(item) => item.id}
+        data={markers}
+        keyExtractor={(item) => item.id || item.name}
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => handleLocationPress(item)}>
             <LocationItem
