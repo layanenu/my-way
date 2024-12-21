@@ -7,6 +7,7 @@ interface ICustomInput {
   value: string;
   onChangeText: (text: string) => void;
   keyboardType?: KeyboardTypeOptions;
+  disabled?: boolean;
 }
 
 const CustomInput = ({
@@ -14,6 +15,7 @@ const CustomInput = ({
   value,
   onChangeText,
   keyboardType,
+  disabled = false,
 }: ICustomInput) => {
   return (
     <Input
@@ -29,6 +31,7 @@ const CustomInput = ({
       marginBottom="16px"
       backgroundColor="#FFFFFF"
       placeholderTextColor="#808080"
+      isDisabled={disabled}
     />
   );
 };

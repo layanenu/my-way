@@ -6,6 +6,8 @@ export type Marker = {
   latitude: string;
   longitude: string;
   markerColor: string;
+  country?: string;
+  currency?: string;
 };
 
 type MarkersContextType = {

@@ -169,6 +169,7 @@ export const HomeScreen = () => {
                       title={item.name}
                       latitude={item.coords.latitude}
                       longitude={item.coords.longitude}
+                      onDelete={() => {}}
                     />
                   </TouchableOpacity>
                 )}

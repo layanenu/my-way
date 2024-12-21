@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, ScrollView, View, Alert } from "react-native";
+import { StyleSheet, ScrollView, View, Alert, Text } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
@@ -9,6 +9,7 @@ import * as ScreenOrientation from "expo-screen-orientation";
 import { backgroundColor } from "../styles/global.styles";
 import { isHexColor, isRealNumber } from "../utils/validations";
 import { useMarkers } from "../context/markersContext";
+import { gql, useLazyQuery } from "@apollo/client";
 
 type NewLocationScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -33,8 +34,19 @@ export interface Location {
   markerColor: string;
 }
 
+const GET_COUNTRY_BY_NAME = gql`
+  query GetCountryByName($name: String!) {
+    countries(filter: { name: { eq: $name } }) {
+      name
+      currency
+    }
+  }
+`;
+
 export const NewLocationScreen = ({ navigation, route }: Props) => {
   const { markers, setMarkers } = useMarkers();
+  const [currency, setCurrency] = useState("");
+  const [country, setCountry] = useState("");
   const [locationName, setLocationName] = useState("");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
@@ -42,7 +54,16 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
   const [isEditing, setIsEditing] = useState(false);
   const [orientation, setOrientation] = useState("portrait");
   const location = route.params?.location;
+  const [fetchCountry, { loading, data, error }] =
+    useLazyQuery(GET_COUNTRY_BY_NAME);
 
+  const handleCurrency = () => {
+    if (country.length) {
+      fetchCountry({ variables: { name: country.trim() } });
+      const [countryData] = data?.countries || [];
+      setCurrency(countryData?.currency || "");
+    }
+  };
   useEffect(() => {
     const detectOrientation = async () => {
       const currentOrientation = await ScreenOrientation.getOrientationAsync();
@@ -86,7 +107,14 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
   }, [isEditing, navigation]);
 
   const handleSave = async () => {
-    if (!locationName || !latitude || !longitude || !markerColor) {
+    if (
+      !locationName ||
+      !latitude ||
+      !longitude ||
+      !markerColor ||
+      !country ||
+      !currency
+    ) {
       Alert.alert("Erro", "Por favor, preencha todos os campos.");
       return;
     }
@@ -110,6 +138,8 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
       latitude,
       longitude,
       markerColor,
+      country,
+      currency,
     };
 
     try {
@@ -202,8 +232,25 @@ export const NewLocationScreen = ({ navigation, route }: Props) => {
           value={markerColor}
           onChangeText={setMarkerColor}
         />
+        <CustomInput
+          placeholder="País"
+          value={country}
+          onChangeText={setCountry}
+        />
+        <Text>Clique no botao procurar moeda para preencher o campo moeda</Text>
+        <CustomInput
+          placeholder="Moeda"
+          value={currency}
+          onChangeText={setCurrency}
+          disabled={true}
+        />
       </View>
       <View style={dynamicStyles.btnContainer}>
+        <CustomButton
+          onPress={handleCurrency}
+          color="warning"
+          name="Procurar Moeda"
+        />
         <CustomButton
           color="info"
           ButtonTextColor={backgroundColor.ButtonTextColor}
