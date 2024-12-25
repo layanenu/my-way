@@ -1,7 +1,6 @@
 import React from "react";
-import { Box, HStack, Text, Image, VStack } from "native-base";
+import { Box, HStack, Text, Image, VStack, Card } from "native-base";
 import CustomButton from "./CustomButton";
-import { useMarkers } from "../context/markersContext";
 
 export interface ILocationItem {
   title: string;
@@ -33,12 +32,13 @@ const LocationItem = ({
         flexDirection="row"
       >
         <HStack alignItems="center" space={3} flexDirection="row">
-          <Image
-            source={{ uri: randomImage }}
-            alt="Turistic image"
-            size="50px"
-            borderRadius="8"
-          />
+          <Card shadow={8} padding="0" size="50px">
+            <Image
+              source={{ uri: randomImage }}
+              alt="Turistic image"
+              size="50px"
+            />
+          </Card>
           <Box>
             <Text fontSize="16px" fontWeight="bold" paddingBottom="2">
               {title}
